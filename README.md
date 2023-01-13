@@ -1,6 +1,6 @@
-# Liquido BRL PayIn Magento Module
+# Liquido PayIn External Magento Checkout Module
 
-This is a Magento Module to add a payment method via Liquido BRL Payments (PayIn).
+This is an External Magento Checkout Module to add a payment method via Liquido Payments (PayIn).
 
 ## Supported Magento Versions:
 - 2.4.3
