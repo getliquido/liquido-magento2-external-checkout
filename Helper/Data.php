@@ -3,99 +3,125 @@
 namespace Liquido\PayIn\Helper;
 
 use \Magento\Framework\App\Helper\AbstractHelper;
+use Magento\Framework\App\Bootstrap;
  
 class Data extends AbstractHelper
 {
     public function __construct(
         \Magento\Framework\App\Helper\Context $context,
         \Magento\Store\Model\StoreManagerInterface $storeManager,
+        \Magento\Catalog\Model\Product $product,
+        \Magento\Quote\Api\CartRepositoryInterface $cartRepositoryInterface,
+        \Magento\Quote\Api\CartManagementInterface $cartManagementInterface,
         \Magento\Customer\Model\CustomerFactory $customerFactory,
-        \Magento\Catalog\Api\ProductRepositoryInterface $productRepository,
         \Magento\Customer\Api\CustomerRepositoryInterface $customerRepository,
-        \Magento\Quote\Model\QuoteFactory $quote,
-        \Magento\Quote\Model\QuoteManagement $quoteManagement,
-        \Magento\Sales\Model\Order\Email\Sender\OrderSender $orderSender
-
+        \Magento\Sales\Model\Order $order
     ) {
-        $this->storeManager = $storeManager;
+        $this->_storeManager = $storeManager;
+        $this->_product = $product;
+        $this->cartRepositoryInterface = $cartRepositoryInterface;
+        $this->cartManagementInterface = $cartManagementInterface;
         $this->customerFactory = $customerFactory;
-        $this->productRepository = $productRepository;
         $this->customerRepository = $customerRepository;
-        $this->quote = $quote;
-        $this->quoteManagement = $quoteManagement;
-        $this->orderSender = $orderSender;
+        $this->order = $order;
         parent::__construct($context);
     }
+
     /*
     * create order programmatically
     */
-    public function createOrder($orderInfo) {
-        $store = $this->storeManager->getStore();
-        $storeId = $store->getStoreId();
-        $websiteId = $this->storeManager->getStore()->getWebsiteId();
-        $customer = $this->customerFactory->create();
+    public function createOrder($orderData) {
+        $store=$this->_storeManager->getStore();
+        $websiteId = $this->_storeManager->getStore()->getWebsiteId();
+        $customer=$this->customerFactory->create();
         $customer->setWebsiteId($websiteId);
-        $customer->loadByEmail($orderInfo['email']);// load customet by email address
-        if(!$customer->getId()){
-            //For guest customer create new cusotmer
+        $customer->loadByEmail($orderData['email']);// load customet by email address
+        if(!$customer->getEntityId()){
+            //If not avilable then create this customer 
             $customer->setWebsiteId($websiteId)
                     ->setStore($store)
-                    ->setFirstname($orderInfo['address']['firstname'])
-                    ->setLastname($orderInfo['address']['lastname'])
-                    ->setEmail($orderInfo['email'])
-                    ->setPassword($orderInfo['email']);
+                    ->setFirstname($orderData['shipping_address']['firstname'])
+                    ->setLastname($orderData['shipping_address']['lastname'])
+                    ->setEmail($orderData['email']) 
+                    ->setPassword($orderData['email']);
             $customer->save();
         }
-        $quote=$this->quote->create(); //Create object of quote
-        $quote->setStore($store); //set store for our quote
-        /* for registered customer */
-        $customer= $this->customerRepository->getById($customer->getId());
+        
+        $cartId = $this->cartManagementInterface->createEmptyCart(); //Create empty cart
+        $quote = $this->cartRepositoryInterface->get($cartId); // load empty cart quote
+        $quote->setStore($store);
+          // if you have allready buyer id then you can load customer directly 
+        $customer= $this->customerRepository->getById($customer->getEntityId());
         $quote->setCurrency();
         $quote->assignCustomer($customer); //Assign quote to customer
+        
+
+        $amount = 0.0;
 
         //add items in quote
-        // foreach($orderInfo['items'] as $item){
-        //     $product=$this->productRepository->getById($item['product_id']);
-        //     if(!empty($item['super_attribute']) ) {
-        //         /* for configurable product */
-        //         $buyRequest = new \Magento\Framework\DataObject($item);
-        //         $quote->addProduct($product,$buyRequest);
-        //     } else {
-        //         /* for simple product */
-        //         $quote->addProduct($product,intval($item['qty']));
-        //     }
-        // }
+        foreach($orderData['items'] as $item){
+            $product=$this->_product->load($item['product_id']);
+            $product->setPrice($item['price']);
+            $quote->addProduct($product, intval($item['qty']));
 
-        //Set Billing and shipping Address to quote
-        $quote->getBillingAddress()->addData($orderInfo['address']);
-        $quote->getShippingAddress()->addData($orderInfo['address']);
+            $amount += $item['price'] * $item['qty'];
+        }
 
-        // set shipping method
+        //Set Address to quote
+        $quote->getBillingAddress()->addData($orderData['shipping_address']);
+        $quote->getShippingAddress()->addData($orderData['shipping_address']);
+
+        // Collect Rates and Set Shipping & Payment Method
         $shippingAddress=$quote->getShippingAddress();
         $shippingAddress->setCollectShippingRates(true)
                         ->collectShippingRates()
-                        ->setShippingMethod('flatrate_flatrate'); //shipping method, please verify flat rate shipping must be enable
-        $quote->setPaymentMethod('checkmo'); //payment method, please verify checkmo must be enable from admin
-        $quote->setInventoryProcessed(false); //decrease item stock equal to qty
-        $quote->reserveOrderId();
-        $quote->save(); //quote save 
-        // Set Sales Order Payment, We have taken check/money order
+                        // ->setShippingMethod('freeshipping_freeshipping');
+                        ->setShippingMethod('flatrate_flatrate'); //shipping method
+
+        $quote->setPaymentMethod('checkmo'); //payment method
+        $quote->setInventoryProcessed(false); //not effetc inventory
+
+        // Set Sales Order Payment
         $quote->getPayment()->importData(['method' => 'checkmo']);
- 
-        // Collect Quote Totals & Save
-        $quote->collectTotals()->save();
-        // Create Order From Quote Object
-        $order = $this->quoteManagement->submit($quote);
-        /* for send order email to customer email id */
-        // $this->orderSender->send($order);
-        /* get order real id from order */
-        // $orderId = $order->getIncrementId();
-        $orderId = $quote->getReservedOrderId();
-        echo $orderId;
-        if($orderId){
-            $result['success']= $orderId;
+        $quote->save(); //Now Save quote and your quote is ready
+        
+        // Collect Totals
+        $quote->collectTotals();
+    
+        // Create Order From Quote
+        $quote = $this->cartRepositoryInterface->get($quote->getId());
+
+        // ******************
+        $totals = 0;
+        foreach ($quote->getAllAddresses() as $address) {
+            if ($address->getAddressType() == "shipping") {
+                $address->setShippingMethod('flatrate_flatrate');
+                $address->setCollectShippingRates(true);
+                $address->setSubtotal($totals);
+                $address->setBaseSubtotal($totals);
+                $address->setSubtotalInclTax($totals);
+                $address->setGrandTotal($amount);
+                $address->setShippingAmount(0);
+                $address->setBaseShippingAmount(0);
+                $address->setShippingInclTax(0);
+                $address->setBaseShippingInclTax(0);
+                $address->setBaseGrandTotal($amount);
+                $address->setDiscountAmount(0);
+                $address->setBaseDiscountAmount(0);
+                $address->save();
+            }
+        }
+        // ******************
+
+        $orderId = $this->cartManagementInterface->placeOrder($quote->getId());
+        $order = $this->order->load($orderId);
+       
+        $order->setEmailSent(0);
+        $increment_id = $order->getRealOrderId();
+        if($order->getEntityId()){
+            $result['order_id']= $order->getRealOrderId();
         }else{
-            $result=['error'=>true,'msg'=>'Error occurs for Order placed'];
+            $result=['error'=>1,'msg'=>'Error while placing order'];
         }
         return $result;
     }
