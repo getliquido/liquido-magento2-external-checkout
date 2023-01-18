@@ -3,7 +3,8 @@
 namespace Liquido\PayIn\Helper;
 
 use \Magento\Framework\App\Helper\AbstractHelper;
-use Magento\Framework\App\Bootstrap;
+use Magento\Sales\Model\Order;
+use Magento\Framework\App\ObjectManager;
  
 class Data extends AbstractHelper
 {
@@ -125,6 +126,23 @@ class Data extends AbstractHelper
         }
         return $result;
     }
+
+    public function updateOrder($incrementId, $orderData)
+    {
+        try {
+            $objectManager = ObjectManager::getInstance();
+            $collection = $objectManager->create('Magento\Sales\Model\Order');
+            $order = $collection->loadByIncrementId($incrementId);
+            $order->setCustomerFirstName($orderData->getData("customerFirstName"));
+            $order->setCustomerLastName($orderData->getData("customerLastName"));
+            $order->setCustomerEmail($orderData->getData("customerEmail"));
+            $order->save();
+        } catch (\Exception $e) {
+            echo "Not found";
+            echo $e;
+        }
+    }
+
 }
  
 ?>

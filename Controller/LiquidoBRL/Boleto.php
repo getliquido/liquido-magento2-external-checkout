@@ -14,6 +14,7 @@ use \Liquido\PayIn\Helper\LiquidoOrderData;
 use \Liquido\PayIn\Model\LiquidoPayInSession;
 use \Liquido\PayIn\Helper\LiquidoSalesOrderHelper;
 use \Liquido\PayIn\Helper\LiquidoConfigData;
+use \Liquido\PayIn\Helper\Data;
 
 use \LiquidoBrl\PayInPhpSdk\Util\Config;
 use \LiquidoBrl\PayInPhpSdk\Util\Country;
@@ -31,6 +32,8 @@ class Boleto implements ActionInterface
     private LoggerInterface $logger;
     protected LiquidoPayInSession $payInSession;
     private LiquidoOrderData $liquidoOrderData;
+
+    private Data $data;
     private PayInService $payInService;
     private LiquidoConfigData $liquidoConfig;
     private LiquidoSalesOrderHelper $liquidoSalesOrderHelper;
@@ -53,7 +56,8 @@ class Boleto implements ActionInterface
         LiquidoConfigData $liquidoConfig,
         RequestInterface $httpRequest,
         LiquidoSalesOrderHelper $liquidoSalesOrderHelper,
-        RemoteAddress $remoteAddress
+        RemoteAddress $remoteAddress,
+        Data $data
     ) {
         $this->remoteAddress = $remoteAddress;
         $this->resultPageFactory = $resultPageFactory;
@@ -68,6 +72,7 @@ class Boleto implements ActionInterface
         $this->boletoInputData = new DataObject(array());
         $this->boletoResultData = new DataObject(array());
         $this->errorMessage = "";
+        $this->data = $data;
     }
 
     private function validateInputBoletoData()
@@ -85,17 +90,17 @@ class Boleto implements ActionInterface
             return false;
         }
 
-        $customerName = $this->liquidoOrderData->getCustomerName();
+        /* $customerName = $this->liquidoOrderData->getCustomerName();
         if ($customerName == null) {
             $this->errorMessage = __('Erro ao obter o nome do cliente.');
             return false;
-        }
+        } */
 
-        $customerEmail = $this->liquidoOrderData->getCustomerEmail();
+        /* $customerEmail = $this->liquidoOrderData->getCustomerEmail();
         if ($customerEmail == null) {
             $this->errorMessage = __('Erro ao obter o email do cliente.');
             return false;
-        }
+        } */
 
         $billingAddress = $this->liquidoOrderData->getBillingAddress();
         if ($billingAddress == null) {
@@ -118,6 +123,26 @@ class Boleto implements ActionInterface
             $this->errorMessage = __('Erro ao obter o CPF do cliente.');
             return false;
         }
+
+        $customerEmail = $boletoFormInputData->getData('customer-email');
+        if ($customerEmail == null) {
+            $this->errorMessage = __('Erro ao obter o Email do cliente.');
+            return false;
+        }
+
+        $customerFirstName = $boletoFormInputData->getData('customer-firstname');
+        if ($customerFirstName == null) {
+            $this->errorMessage = __('Erro ao obter o Nome do cliente.');
+            return false;
+        }
+
+        $customerLastName = $boletoFormInputData->getData('customer-lastname');
+        if ($customerLastName == null) {
+            $this->errorMessage = __('Erro ao obter o Sobrenome do cliente.');
+            return false;
+        }
+
+        $customerName = $customerFirstName . " " . $customerLastName;
         
         $customerIpAddress = $this->remoteAddress->getRemoteAddress();
 
@@ -128,6 +153,8 @@ class Boleto implements ActionInterface
         $this->boletoInputData = new DataObject(array(
             'orderId' => $orderId,
             'grandTotal' => $grandTotal,
+            'customerFirstName' => $customerFirstName,
+            'customerLastName' => $customerLastName,
             'customerName' => $customerName,
             'customerEmail' => $customerEmail,
             'customerCpf' => $customerCpf,
@@ -136,6 +163,8 @@ class Boleto implements ActionInterface
             'paymentDeadline' => $timestampDeadline,
             'customerIpAddress' => $customerIpAddress
         ));
+
+        $this->data->updateOrder($orderId, $this->boletoInputData);
 
         return true;
     }

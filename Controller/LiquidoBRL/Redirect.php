@@ -76,30 +76,32 @@ class Redirect implements ActionInterface
 
         $price = $product->getPrice();
 
+        // Alameda Santos, 2300, 1 andar, cj. 11, Cerqueira César, CEP 01.418-200
         $orderInfo = [
             'currency_id'  => 'BRL',
-            'email'        => 'client@client.com', // buyer email id
+            'email'        => 'liquido@liquido.com', // buyer email id
             'shipping_address' => [
-                'firstname'    => 'Client',
-                'lastname'     => 'Name',
+                'firstname'    => 'LIQUIDO BRL',
+                'lastname'     => 'PAGAMENTOS DIGITAIS LTDA',
                 'prefix' => '',
                 'suffix' => '',
-                'street' => 'Rua Teste',
+                'street' => 'Alameda Santos, 2300, 1 andar, cj. 11',
                 'city' => 'São Paulo',
-                'country_id' => 'US',
-                'region' => 'California',
-                'region_id' => '12', // State region id
-                'postcode' => '45454',
-                'telephone' => '1234512345',
-                'fax' => '12345',
-                'save_in_address_book' => 1
+                'country_id' => 'BR',
+                'region' => 'SP',
+                // 'region_id' => '12', // State region id
+                'postcode' => '01.418-200',
+                'telephone' => '+55 11 947957681',
+                // 'fax' => '12345',
+                // 'save_in_address_book' => 1
             ],
-            'items'=> [ //array of product which order you want to create
+            'items'=> [
                 ['product_id'=>$product_id, 'qty'=>1, 'price'=>$price],
             ]
         ];
 
-        $orderData = $this->data->createOrder($orderInfo);
+        // $orderData = $this->data->createOrder($orderInfo);
+        $this->data->createOrder($orderInfo);
 
         $redirect = $this->resultFactory->create(ResultFactory::TYPE_REDIRECT);
         $redirect->setUrl('/checkout/liquidobrl/index');

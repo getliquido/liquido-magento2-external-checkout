@@ -8,6 +8,24 @@
         <fieldset class="fieldset">
             <legend class="legend"><span><?php echo __('Dados Pessoais') ?></span></legend><br>
             <div class="field required">
+                <label for="customer-firstname" class="label"><span><?php echo __('Nome') ?></span></label>
+                <div class="control">
+                    <input type="text" name="customer-firstname" id="customer-firstname" value="" title="<?php echo __('Nome') ?>" class="input-text" data-validate="{'required-entry':true}">
+                </div>
+            </div>
+            <div class="field required">
+                <label for="customer-lastname" class="label"><span><?php echo __('Sobrenome') ?></span></label>
+                <div class="control">
+                    <input type="text" name="customer-lastname" id="customer-lastname" value="" title="<?php echo __('Sobrenome') ?>" class="input-text" data-validate="{'required-entry':true}">
+                </div>
+            </div>
+            <div class="field required">
+                <label for="customer-email" class="label"><span><?php echo __('Email') ?></span></label>
+                <div class="control">
+                    <input type="text" name="customer-email" id="customer-email" value="" title="<?php echo __('Email') ?>" class="input-text" data-validate="{'required-entry':true, 'validate-email':true}">
+                </div>
+            </div>
+            <div class="field required">
                 <label for="customer-cpf" class="label"><span><?php echo __('Cpf') ?></span></label>
                 <div class="control">
                     <input type="text" name="customer-cpf" id="customer-cpf" value="" title="<?php echo __('Cpf') ?>" class="input-text" data-validate="{'required-entry':true, 'validate-cpf':true}">
