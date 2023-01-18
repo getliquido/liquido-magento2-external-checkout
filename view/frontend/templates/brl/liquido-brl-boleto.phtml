@@ -13,7 +13,6 @@ use \LiquidoBrl\PayInPhpSdk\Util\PayInStatus; ?>
             && $this->getTransferStatus() != PayInStatus::SETTLED
         ) : ?>
             <h2>Pague seu boleto pelo seu app de pagamentos ou Internet Banking</h2>
-            <!-- <div id="pdf-container"></div> -->
             <a target="_blank" href="<?php echo $this->getBoletoUrl() ?>">Baixar Boleto</a>
             <hr />
             <div id="boleto-digital-line-copy-paste">
@@ -39,39 +38,3 @@ use \LiquidoBrl\PayInPhpSdk\Util\PayInStatus; ?>
         <a href="/checkout/liquidobrl/index">Alterar método de pagamento</a>
     <?php endif; ?>
 </div>
-<!-- <script>
-    require(
-        ['jquery', 'jquery/ui'],
-        function($) {
-
-            $(document).ready(function() {
-
-                var URL = "https://docs.google.com/gview?url=<?php // echo $this->getBoletoUrl() 
-                                                                ?>&embedded=true";
-                var count = 0;
-                var iframe = `<iframe id="pdf-iframe" src="${URL}" style="width:900px; height:900px;" frameborder="0" allowfullscreen=""></iframe>`;
-
-                $(`#pdf-container`).html(iframe);
-
-                $('#pdf-iframe').on('load', function() {
-                    count++;
-                    if (count > 0) {
-                        clearInterval(ref)
-                    }
-                });
-
-                var ref = setInterval(() => {
-                    $(`#pdf-container`).html(iframe);
-                    $('#pdf-iframe').on('load', function() {
-                        count++;
-                        if (count > 0) {
-                            clearInterval(ref)
-                        }
-                    });
-                }, 2000);
-
-            });
-
-        }
-    );
-</script> -->

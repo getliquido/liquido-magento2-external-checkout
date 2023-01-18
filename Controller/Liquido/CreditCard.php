@@ -14,6 +14,7 @@ use \Liquido\PayIn\Helper\LiquidoOrderData;
 use \Liquido\PayIn\Model\LiquidoPayInSession;
 use \Liquido\PayIn\Helper\LiquidoSalesOrderHelper;
 use \Liquido\PayIn\Helper\LiquidoConfigData;
+use \Liquido\PayIn\Helper\Data;
 
 use \LiquidoBrl\PayInPhpSdk\Util\Config;
 use \LiquidoBrl\PayInPhpSdk\Util\Country;
@@ -32,6 +33,8 @@ class CreditCard implements ActionInterface
     private LoggerInterface $logger;
     protected LiquidoPayInSession $payInSession;
     private LiquidoOrderData $liquidoOrderData;
+    private Data $data;
+
     private PayInService $payInService;
     private LiquidoConfigData $liquidoConfig;
     private LiquidoSalesOrderHelper $liquidoSalesOrderHelper;
@@ -51,7 +54,8 @@ class CreditCard implements ActionInterface
         LiquidoConfigData $liquidoConfig,
         RequestInterface $httpRequest,
         LiquidoSalesOrderHelper $liquidoSalesOrderHelper,
-        RemoteAddress $remoteAddress
+        RemoteAddress $remoteAddress,
+        Data $data
     ) {
         $this->remoteAddress = $remoteAddress;
         $this->resultPageFactory = $resultPageFactory;
@@ -66,6 +70,7 @@ class CreditCard implements ActionInterface
         $this->creditCardInputData = new DataObject(array());
         $this->creditCardResultData = new DataObject(array());
         $this->errorMessage = "";
+        $this->data = $data;
     }
 
     private function validateInputCreditCardData()
@@ -83,7 +88,7 @@ class CreditCard implements ActionInterface
             return false;
         }
 
-        $customerName = $this->liquidoOrderData->getCustomerName();
+        /* $customerName = $this->liquidoOrderData->getCustomerName();
         if ($customerName == null) {
             $this->errorMessage = __('Erro ao obter o nome do cliente.');
             return false;
@@ -93,7 +98,7 @@ class CreditCard implements ActionInterface
         if ($customerEmail == null) {
             $this->errorMessage = __('Erro ao obter o email do cliente.');
             return false;
-        }
+        } */
 
         $billingAddress = $this->liquidoOrderData->getBillingAddress();
         if ($billingAddress == null) {
@@ -154,6 +159,26 @@ class CreditCard implements ActionInterface
             return false;
         }
 
+        $customerEmail = $creditCardFormInputData->getData('customer-email');
+        if ($customerEmail == null) {
+            $this->errorMessage = __('Erro ao obter o Email do cliente.');
+            return false;
+        }
+
+        $customerFirstName = $creditCardFormInputData->getData('customer-firstname');
+        if ($customerFirstName == null) {
+            $this->errorMessage = __('Erro ao obter o Nome do cliente.');
+            return false;
+        }
+
+        $customerLastName = $creditCardFormInputData->getData('customer-lastname');
+        if ($customerLastName == null) {
+            $this->errorMessage = __('Erro ao obter o Sobrenome do cliente.');
+            return false;
+        }
+
+        $customerName = $customerFirstName . " " . $customerLastName;
+
         $customerIpAddress = $this->remoteAddress->getRemoteAddress();
         if ($customerIpAddress == null) {
             $this->errorMessage = __('Erro ao obter o IP do cliente.');
@@ -163,6 +188,8 @@ class CreditCard implements ActionInterface
         $this->creditCardInputData = new DataObject(array(
             'orderId' => $orderId,
             'grandTotal' => $grandTotal,
+            'customerFirstName' => $customerFirstName,
+            'customerLastName' => $customerLastName,
             'customerName' => $customerName,
             'customerEmail' => $customerEmail,
             'customerCardName' => $customerCardName,
@@ -176,6 +203,8 @@ class CreditCard implements ActionInterface
             'streetText' => $streetString,
             'customerIpAddress' => $customerIpAddress
         ));
+
+        $this->data->updateOrder($orderId, $this->creditCardInputData);
 
         return true;
     }

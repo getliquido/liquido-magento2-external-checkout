@@ -69,6 +69,24 @@
                 </div>
             </div>
             <div class="field required">
+                <label for="customer-firstname" class="label"><span><?php echo __('Nome') ?></span></label>
+                <div class="control">
+                    <input type="text" name="customer-firstname" id="customer-firstname" value="" title="<?php echo __('Nome') ?>" class="input-text" data-validate="{'required-entry':true}">
+                </div>
+            </div>
+            <div class="field required">
+                <label for="customer-lastname" class="label"><span><?php echo __('Sobrenome') ?></span></label>
+                <div class="control">
+                    <input type="text" name="customer-lastname" id="customer-lastname" value="" title="<?php echo __('Sobrenome') ?>" class="input-text" data-validate="{'required-entry':true}">
+                </div>
+            </div>
+            <div class="field required">
+                <label for="customer-email" class="label"><span><?php echo __('Email') ?></span></label>
+                <div class="control">
+                    <input type="text" name="customer-email" id="customer-email" value="" title="<?php echo __('Email') ?>" class="input-text" data-validate="{'required-entry':true, 'validate-email':true}">
+                </div>
+            </div>
+            <div class="field required">
                 <?php if ($this->getCountry() == 'CO') : ?>
                     <label for="customer-cc" class="label"><span><?php echo __('CC') ?></span></label>
                     <div class="control">

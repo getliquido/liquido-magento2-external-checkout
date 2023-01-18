@@ -76,7 +76,6 @@ class Redirect implements ActionInterface
 
         $price = $product->getPrice();
 
-        // Alameda Santos, 2300, 1 andar, cj. 11, Cerqueira César, CEP 01.418-200
         $orderInfo = [
             'currency_id'  => 'BRL',
             'email'        => 'liquido@liquido.com', // buyer email id
@@ -85,12 +84,12 @@ class Redirect implements ActionInterface
                 'lastname'     => 'PAGAMENTOS DIGITAIS LTDA',
                 'prefix' => '',
                 'suffix' => '',
-                'street' => 'Alameda Santos, 2300, 1 andar, cj. 11',
+                'street' => 'Alameda Santos, 2300',
                 'city' => 'São Paulo',
                 'country_id' => 'BR',
                 'region' => 'SP',
                 // 'region_id' => '12', // State region id
-                'postcode' => '01.418-200',
+                'postcode' => '01418200',
                 'telephone' => '+55 11 947957681',
                 // 'fax' => '12345',
                 // 'save_in_address_book' => 1
