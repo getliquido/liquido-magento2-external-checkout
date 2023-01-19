@@ -141,11 +141,11 @@ class CreditCard implements ActionInterface
             return false;
         }
 
-        // $customerCardInstallments = $creditCardFormInputData->getData('card-installments');
-        // if ($customerCardInstallments == null) {
-        //     $this->errorMessage = __('Erro ao obter o número de parcelas.');
-        //     return false;
-        // }
+        $customerCardInstallments = $creditCardFormInputData->getData('card-installments');
+        if ($customerCardInstallments == null) {
+            $this->errorMessage = __('Erro ao obter o número de parcelas.');
+            return false;
+        }
 
         $customerDocument = null;
         if ($this->liquidoConfig->getCountry() == 'BR') {
@@ -197,7 +197,7 @@ class CreditCard implements ActionInterface
             'customerCardExpireMonth' => $customerCardExpireDateArray[0],
             'customerCardExpireYear' => $customerCardExpireDateArray[1],
             'customerCardCVV' => $customerCardCVV,
-            // 'customerCardInstallments' => $customerCardInstallments,
+            'customerCardInstallments' => $customerCardInstallments,
             'customerDocument' => $customerDocument,
             'customerBillingAddress' => $billingAddress,
             'streetText' => $streetString,
@@ -370,7 +370,7 @@ class CreditCard implements ActionInterface
             if ($country == 'BR') {
                 $payload["currency"] = Currency::BRL;
                 $payload["country"] = Country::BRAZIL;
-                //$payload["installments"] = $this->creditCardInputData->getData("customerCardInstallments");
+                $payload["installments"] = $this->creditCardInputData->getData("customerCardInstallments");
                 $payload["payer"]["document"] = [
                     "documentId" => $this->creditCardInputData->getData("customerDocument"),
                     "type" => "CPF"
@@ -378,7 +378,7 @@ class CreditCard implements ActionInterface
             } elseif ($country == 'CO') {
                 $payload["currency"] = Currency::COP;
                 $payload["country"] = Country::COLOMBIA;
-                //$payload["payer"]["document"] = $this->creditCardInputData->getData("customerDocument");
+                $payload["payer"]["document"] = $this->creditCardInputData->getData("customerDocument");
             }
 
             $this->logger->info("[Controler Credit Card Payload]: ", $payload);

@@ -6,6 +6,7 @@ use \Magento\Framework\HTTP\PhpEnvironment\RemoteAddress;
 use \Magento\Framework\App\ActionInterface;
 use \Magento\Framework\View\Result\PageFactory;
 use \Magento\Framework\Message\ManagerInterface;
+use \Magento\Framework\App\RequestInterface;
 use \Magento\Framework\DataObject;
 use \Psr\Log\LoggerInterface;
 
@@ -13,6 +14,7 @@ use \Liquido\PayIn\Helper\LiquidoOrderData;
 use \Liquido\PayIn\Model\LiquidoPayInSession;
 use \Liquido\PayIn\Helper\LiquidoSalesOrderHelper;
 use \Liquido\PayIn\Helper\LiquidoConfigData;
+use \Liquido\PayIn\Helper\Data;
 
 use \LiquidoBrl\PayInPhpSdk\Util\Config;
 use \LiquidoBrl\PayInPhpSdk\Util\Country;
@@ -30,11 +32,14 @@ class PixCode implements ActionInterface
     private LoggerInterface $logger;
     protected LiquidoPayInSession $payInSession;
     private LiquidoOrderData $liquidoOrderData;
+    private Data $data;
     private PayInService $payInService;
     private LiquidoConfigData $liquidoConfig;
     private LiquidoSalesOrderHelper $liquidoSalesOrderHelper;
     private DataObject $pixInputData;
     private DataObject $pixResultData;
+
+    private RequestInterface $httpRequest;
     private String $errorMessage;
     private $remoteAddress;
 
@@ -46,8 +51,10 @@ class PixCode implements ActionInterface
         LiquidoOrderData $liquidoOrderData,
         PayInService $payInService,
         LiquidoConfigData $liquidoConfig,
+        RequestInterface $httpRequest,
         LiquidoSalesOrderHelper $liquidoSalesOrderHelper,
-        RemoteAddress $remoteAddress
+        RemoteAddress $remoteAddress,
+        Data $data
     ) {
         $this->remoteAddress = $remoteAddress;
         $this->resultPageFactory = $resultPageFactory;
@@ -57,10 +64,12 @@ class PixCode implements ActionInterface
         $this->liquidoOrderData = $liquidoOrderData;
         $this->payInService = $payInService;
         $this->liquidoConfig = $liquidoConfig;
+        $this->httpRequest = $httpRequest;
         $this->liquidoSalesOrderHelper = $liquidoSalesOrderHelper;
         $this->pixInputData = new DataObject(array());
         $this->pixResultData = new DataObject(array());
         $this->errorMessage = "";
+        $this->data = $data;
     }
 
     private function validateInputPixData()
@@ -78,11 +87,11 @@ class PixCode implements ActionInterface
             return false;
         }
 
-        $customerEmail = $this->liquidoOrderData->getCustomerEmail();
+        /* $customerEmail = $this->liquidoOrderData->getCustomerEmail();
         if ($customerEmail == null) {
             $this->errorMessage = __('Erro ao obter o email do cliente.');
             return false;
-        }
+        } */
 
         $billingAddress = $this->liquidoOrderData->getBillingAddress();
         if ($billingAddress == null) {
@@ -104,14 +113,44 @@ class PixCode implements ActionInterface
             return false;
         }
 
+        $pixFormInputData = new DataObject($this->httpRequest->getParams());
+
+        $customerCpf = $pixFormInputData->getData('customer-cpf');
+        if ($customerCpf == null) {
+            $this->errorMessage = __('Erro ao obter o CPF do cliente.');
+            return false;
+        }
+
+        $customerEmail = $pixFormInputData->getData('customer-email');
+        if ($customerEmail == null) {
+            $this->errorMessage = __('Erro ao obter o Email do cliente.');
+            return false;
+        }
+
+        $customerFirstName = $pixFormInputData->getData('customer-firstname');
+        if ($customerFirstName == null) {
+            $this->errorMessage = __('Erro ao obter o Nome do cliente.');
+            return false;
+        }
+
+        $customerLastName = $pixFormInputData->getData('customer-lastname');
+        if ($customerLastName == null) {
+            $this->errorMessage = __('Erro ao obter o Sobrenome do cliente.');
+            return false;
+        }
+
         $this->pixInputData = new DataObject(array(
             'orderId' => $orderId,
             'grandTotal' => $grandTotal,
+            'customerFirstName' => $customerFirstName,
+            'customerLastName' => $customerLastName,
             'customerEmail' => $customerEmail,
             'customerBillingAddress' => $billingAddress,
             'streetText' => $streetString,
             'customerIpAddress' => $customerIpAddress
         ));
+
+        $this->data->updateOrder($orderId, $this->pixInputData);
 
         return true;
     }

@@ -308,11 +308,7 @@ class Boleto implements ActionInterface
                 "description" => "Module Magento 2 Boleto Request"
             ]);
 
-            // $this->logger->info(json_encode($payInRequest->toArray()));
-
             $boletoResponse = $this->payInService->createPayIn($config, $payInRequest);
-
-            // $this->logger->info(json_encode($boletoResponse));
 
             $this->manageBoletoResponse($boletoResponse);
 
