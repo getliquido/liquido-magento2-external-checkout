@@ -2,8 +2,13 @@
 use \LiquidoBrl\PayInPhpSdk\Util\Common\PaymentMethod;
 use \LiquidoBrl\PayInPhpSdk\Util\PayInStatus; ?>
 
-<div>
-    <h1><?php echo __('Liquido Pagamentos') ?></h1>
+<div class="liquido-container">
+    <!-- <h1>Liquido Pagamentos</h1> -->
+
+    <div>
+        <img id="liquido-logo" src="<?php echo $this->getViewFileUrl("Liquido_PayIn::images/liquido-logo.png"); ?>" alt="Liquido Logo" >
+    </div>
+
     <?php if (!$this->hasFailed()) : ?>
         <h3><?php echo __('Número do pedido: ') ?><?php echo $this->getOrderId() ?></h3>
         <?php if (

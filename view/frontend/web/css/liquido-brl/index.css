@@ -1,6 +1,13 @@
 .liquido-container {
+    margin-top: 50px;
+    
     text-align: left;
     width: 100%;
+}
+
+#liquido-logo {
+    width: 60%;
+    height: 130px;
 }
 
 .liquido-container #payin-methods {
